@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Survivors Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <main class="settings-shell">
+      <header class="settings-header">
+        <div>
+          <p class="eyebrow">Game options</p>
+          <h1>SETTINGS</h1>
+        </div>
+        <div class="gear-badge">⚙️</div>
+      </header>
+
+      <section class="panel-card">
+        <h2>Display</h2>
+        <p class="panel-copy">Style your run like a neon survivor HUD.</p>
+        <div class="option-row">
+          <span>Fullscreen</span>
+          <button class="mini-btn" type="button" onclick="window.opener?.document.getElementById('fullscreenBtn')?.click()">Open</button>
+        </div>
+        <div class="option-row">
+          <span>Canvas glow</span>
+          <span class="chip">ON</span>
+        </div>
+      </section>
+
+      <section class="panel-card">
+        <h2>Controls</h2>
+        <ul>
+          <li>WASD / touch stick to move</li>
+          <li>Auto-fire keeps the swarm off your back</li>
+          <li>Collect XP and HP pickups to survive</li>
+        </ul>
+      </section>
+
+      <section class="panel-card">
+        <h2>Quick tips</h2>
+        <p class="panel-copy">Keep moving, watch your HP bar, and trigger the Scatter Shot when the charge is full.</p>
+      </section>
+    </main>
+  </body>
+</html>

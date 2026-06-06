@@ -1,0 +1,130 @@
+:root {
+  color-scheme: dark;
+  --bg: #13161d;
+  --panel: #1d2430;
+  --panel-2: #262f3d;
+  --accent: #77d7ff;
+  --accent-2: #ffa76b;
+  --good: #7af5b5;
+  --bad: #ff6b6b;
+  --text: #eff6ff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; font-family: 'Press Start 2P', cursive; background: linear-gradient(180deg, #0d1117 0%, var(--bg) 100%); color: var(--text); }
+body { display: flex; justify-content: center; align-items: flex-start; }
+
+.app-shell { width: min(1440px, 100vw); padding: 24px; }
+
+@media (max-width: 640px) {
+  .app-shell { padding: 12px; }
+}
+.settings-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 15, 25, 0.72); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity 0.18s ease; z-index: 30; }
+.settings-modal.open { opacity: 1; pointer-events: auto; }
+.settings-panel { position: relative; width: min(420px, calc(100vw - 24px)); background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 3px solid rgba(122,245,181,0.25); border-radius: 18px; padding: 16px; box-shadow: 0 18px 32px rgba(0,0,0,0.35); }
+.settings-panel h2 { margin: 0 0 8px; font-size: 16px; color: var(--accent-2); }
+.settings-close { position: absolute; top: 10px; right: 10px; border: 0; background: transparent; color: var(--text); font-size: 18px; cursor: pointer; }
+.settings-list { display: grid; gap: 10px; margin-top: 12px; }
+.settings-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 10px; color: var(--text); }
+.settings-row:first-of-type { border-top: 0; }
+.phone-switch { position: relative; width: 56px; height: 30px; border-radius: 999px; border: 2px solid rgba(122,245,181,0.35); background: rgba(148, 163, 184, 0.22); cursor: pointer; padding: 2px; transition: background 0.18s ease, border-color 0.18s ease; }
+.phone-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(180deg, #eff6ff, #cbd5e1); box-shadow: 0 2px 8px rgba(0,0,0,0.25); transition: transform 0.18s ease; }
+.phone-switch.on { background: linear-gradient(180deg, rgba(122,245,181,0.25), rgba(56,189,248,0.18)); border-color: rgba(122,245,181,0.65); }
+.phone-switch.on::after { transform: translateX(26px); }
+.shoot-btn { width: 52px; height: 52px; border-radius: 14px; border: 2px solid rgba(122,245,181,0.35); background: linear-gradient(180deg, rgba(122,245,181,0.16), rgba(15,23,42,0.95)); color: #eaffff; font-size: 18px; cursor: pointer; display: grid; place-items: center; opacity: 0.9; box-shadow: 0 10px 16px rgba(0,0,0,0.35), 0 0 14px rgba(122,245,181,0.12); touch-action: manipulation; user-select: none; transition: transform 0.12s ease, opacity 0.18s ease, background 0.18s ease; }
+.shoot-icon { display: inline-block; font-size: 18px; line-height: 1; color: #dff9ff; text-shadow: 0 0 8px rgba(122,245,181,0.35); }
+.shoot-btn.active { opacity: 1; background: linear-gradient(180deg, rgba(122,245,181,0.28), rgba(15,23,42,1)); box-shadow: 0 10px 18px rgba(0,0,0,0.35), 0 0 18px rgba(122,245,181,0.28); }
+.shoot-btn.hidden { opacity: 0; pointer-events: none; transform: scale(0.92); }
+.shoot-btn:hover { transform: translateY(-1px); }
+.shoot-btn:active { animation: shootPress 110ms ease; }
+@keyframes shootPress { 0% { transform: scale(1); } 45% { transform: scale(0.88); } 100% { transform: scale(1); } }
+.game-shoot-btn { position: absolute; right: 18px; bottom: 18px; z-index: 2; }
+.topbar { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
+.topbar-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.settings-btn { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid rgba(122,245,181,0.35); border-radius: 12px; padding: 8px 10px; background: rgba(122,245,181,0.08); color: var(--text); font-family: 'Press Start 2P', cursive; cursor: pointer; box-shadow: 0 10px 18px rgba(0,0,0,0.25); }
+.settings-btn:hover { background: rgba(122,245,181,0.18); }
+.settings-icon { font-size: 16px; line-height: 1; }
+.settings-label { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #d8e4fb; }
+
+:fullscreen .topbar,
+:fullscreen .hud-card {
+  display: none !important;
+}
+
+:fullscreen .app-shell {
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+}
+
+:fullscreen .game-panel {
+  grid-template-columns: 1fr;
+  height: 100vh;
+}
+
+:fullscreen .game-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+:fullscreen #game {
+  width: 100vw;
+  height: auto;
+  max-height: 100vh;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+}
+.eyebrow { text-transform: uppercase; letter-spacing: 0.35em; font-size: 10px; color: var(--accent); }
+h1 { margin: 6px 0 0; font-size: 24px; letter-spacing: 0.18em; }
+.hint, .small-note { color: #cad6ec; font-size: 10px; line-height: 1.6; }
+
+@media (max-width: 640px) {
+  h1 { font-size: 18px; line-height: 1.25; }
+  .eyebrow { font-size: 8px; letter-spacing: 0.22em; }
+  .hint, .small-note { font-size: 9px; line-height: 1.45; }
+}
+
+.game-panel { display: grid; grid-template-columns: 1fr 320px; gap: 18px; align-items: stretch; }
+.game-stage { position: relative; }
+#game { width: 100%; height: auto; border: 4px solid #2a3344; border-radius: 18px; background: #0e1624; box-shadow: 0 24px 40px rgba(0,0,0,0.35); image-rendering: pixelated; image-rendering: crisp-edges; }
+.mobile-joystick { position: absolute; left: 18px; bottom: 18px; width: 96px; height: 96px; border-radius: 50%; border: 2px solid rgba(122,245,181,0.35); background: rgba(15,23,42,0.45); display: none; touch-action: none; z-index: 2; }
+.mobile-stick { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; border-radius: 50%; background: rgba(122,245,181,0.95); transform: translate(-50%, -50%); box-shadow: 0 0 0 4px rgba(122,245,181,0.18); }
+
+.hud-card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 4px solid #2a3344; border-radius: 18px; padding: 16px; box-shadow: 0 18px 28px rgba(0,0,0,0.35); }
+.hud-card h2 { margin-top: 0; font-size: 14px; color: var(--accent-2); }
+.fullscreen-btn { width: 100%; border: 2px solid rgba(122,245,181,0.35); border-radius: 10px; padding: 10px; background: rgba(122,245,181,0.08); color: var(--text); font-family: 'Press Start 2P', cursive; font-size: 10px; cursor: pointer; margin-bottom: 10px; }
+.fullscreen-btn:hover { background: rgba(122,245,181,0.18); }
+.hud-card ul { padding-left: 18px; color: #d8e4fb; font-size: 10px; line-height: 1.7; }
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.stat-box { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.stat-box span { color: #99a8c4; font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; }
+.stat-box strong { font-size: 14px; color: var(--good); }
+
+@media (max-width: 1120px) {
+  .topbar { flex-direction: column; align-items: flex-start; }
+  .topbar-actions { align-items: flex-start; }
+  .game-panel { grid-template-columns: 1fr; gap: 12px; }
+  .hud-card { order: -1; }
+  .mobile-joystick { display: block; }
+}
+
+@media (max-width: 640px) {
+  .topbar { gap: 10px; margin-bottom: 12px; }
+  .topbar-actions { width: 100%; align-items: stretch; }
+  .settings-btn { width: 100%; padding: 10px; border-radius: 14px; }
+  .hud-card { padding: 12px; border-radius: 14px; }
+  .hud-card ul { font-size: 9px; line-height: 1.55; }
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-box { padding: 8px; border-radius: 10px; }
+  .stat-box span { font-size: 8px; }
+  .stat-box strong { font-size: 12px; }
+  .fullscreen-btn { padding: 10px; font-size: 9px; }
+  .game-shoot-btn { width: 58px; height: 58px; right: 12px; bottom: 12px; }
+  .mobile-joystick { left: 12px; bottom: 12px; width: 88px; height: 88px; }
+  .mobile-stick { width: 40px; height: 40px; }
+}

@@ -1,0 +1,31 @@
+:root {
+  color-scheme: dark;
+  --bg: #111827;
+  --panel: #1d2430;
+  --panel-2: #262f3d;
+  --accent: #77d7ff;
+  --accent-2: #ffa76b;
+  --good: #7af5b5;
+  --text: #eff6ff;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; min-height: 100%; font-family: 'Press Start 2P', cursive; background: linear-gradient(180deg, #0d1117 0%, var(--bg) 100%); color: var(--text); }
+body { display: flex; align-items: stretch; justify-content: center; }
+
+.settings-shell { width: 100%; min-height: 100vh; padding: 18px; background: linear-gradient(180deg, rgba(17,24,39,0.96), rgba(15,23,42,0.98)); }
+.settings-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.eyebrow { text-transform: uppercase; letter-spacing: 0.25em; color: var(--accent); font-size: 9px; margin: 0 0 4px; }
+h1 { margin: 0; font-size: 18px; letter-spacing: 0.18em; }
+.gear-badge { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; background: rgba(122,245,181,0.08); border: 2px solid rgba(122,245,181,0.35); box-shadow: 0 0 16px rgba(122,245,181,0.12); font-size: 18px; }
+
+.panel-card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 3px solid rgba(122,245,181,0.2); border-radius: 14px; padding: 12px; margin-bottom: 12px; box-shadow: 0 14px 22px rgba(0,0,0,0.35); }
+.panel-card h2 { margin: 0 0 8px; color: var(--accent-2); font-size: 12px; }
+.panel-copy, .panel-card li { color: #dbe7fa; font-size: 9px; line-height: 1.6; }
+
+.option-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+.option-row:first-of-type { border-top: 0; }
+.option-row span:first-child { color: #eff6ff; font-size: 9px; }
+.chip { color: var(--good); font-size: 9px; text-transform: uppercase; }
+.mini-btn { border: 2px solid rgba(122,245,181,0.35); border-radius: 10px; background: rgba(122,245,181,0.08); color: var(--text); font-family: 'Press Start 2P', cursive; font-size: 8px; padding: 8px 10px; cursor: pointer; }
+.mini-btn:hover { background: rgba(122,245,181,0.18); }
