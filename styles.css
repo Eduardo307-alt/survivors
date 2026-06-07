@@ -20,7 +20,7 @@ body { display: flex; justify-content: center; align-items: flex-start; }
 .start-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
 .start-content { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 32px; }
 .start-title { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.title-word { display: block; font-family: 'Press Start 2P', cursive; font-size: 48px; letter-spacing: 0.18em; opacity: 0; }
+.title-word { display: block; font-family: 'Press Start 2P', cursive; font-size: clamp(24px, 5vw, 48px); letter-spacing: 0.18em; opacity: 0; }
 .title-pixel { color: var(--accent); animation: slideInFromLeft 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.3s forwards; }
 .title-survivors { color: var(--text); animation: slideInFromRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards; }
 @keyframes slideInFromLeft { from { opacity: 0; transform: translateX(-200px); } to { opacity: 1; transform: translateX(0); } }
@@ -41,6 +41,11 @@ body { display: flex; justify-content: center; align-items: flex-start; }
 @keyframes loadingPulse { 0% { transform: translateX(-100%); } 50% { transform: translateX(0%); } 100% { transform: translateX(120%); } }
 
 @media (max-width: 640px) {
+  .start-content {
+    max-width: 90vw;
+    width: auto;
+    height: auto;
+  }
   .app-shell { padding: 12px; }
 }
 .settings-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 15, 25, 0.72); backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity 0.18s ease; z-index: 30; }
