@@ -100,7 +100,101 @@ const autoShootSwitch = document.getElementById('autoShootSwitch');
 
 const settingsState = {
   autoShoot: true,
+  soundEnabled: true,
 };
+
+// ── Sound Engine ──────────────────────────────────────────────────────────────
+const SoundEngine = (() => {
+  let actx = null;
+
+  function ac() {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+
+  function tone(freq, type, dur, vol, freqEnd) {
+    if (!settingsState.soundEnabled) return;
+    const c = ac();
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.connect(g);
+    g.connect(c.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, c.currentTime);
+    if (freqEnd !== undefined) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), c.currentTime + dur);
+    }
+    g.gain.setValueAtTime(vol, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    osc.start(c.currentTime);
+    osc.stop(c.currentTime + dur + 0.01);
+  }
+
+  function noise(dur, vol, filterFreq) {
+    if (!settingsState.soundEnabled) return;
+    const c = ac();
+    const size = Math.floor(c.sampleRate * dur);
+    const buf = c.createBuffer(1, size, c.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+    const src = c.createBufferSource();
+    src.buffer = buf;
+    const filt = c.createBiquadFilter();
+    filt.type = 'bandpass';
+    filt.frequency.value = filterFreq || 800;
+    const g = c.createGain();
+    g.gain.setValueAtTime(vol, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + dur);
+    src.connect(filt);
+    filt.connect(g);
+    g.connect(c.destination);
+    src.start(c.currentTime);
+  }
+
+  return {
+    // Short high-pitched "pew" for Pierce Bolt
+    shoot() {
+      tone(880, 'square', 0.08, 0.15, 440);
+    },
+    // Triple burst for Scatter Shot
+    shootScatter() {
+      tone(760, 'square', 0.07, 0.13, 380);
+      setTimeout(() => tone(820, 'square', 0.07, 0.13, 410), 35);
+      setTimeout(() => tone(700, 'square', 0.07, 0.13, 350), 70);
+    },
+    // Mid-frequency thud when a bullet hits an enemy
+    enemyHit() {
+      tone(260, 'sawtooth', 0.06, 0.1, 130);
+    },
+    // Noise burst + descending tone on enemy death
+    enemyDeath() {
+      noise(0.22, 0.28, 600);
+      tone(160, 'sawtooth', 0.18, 0.12, 55);
+    },
+    // Low thump when player takes damage
+    playerHit() {
+      tone(110, 'sawtooth', 0.2, 0.3, 55);
+      noise(0.1, 0.18, 200);
+    },
+    // Rising arpeggio on level up
+    levelUp() {
+      [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 'square', 0.18, 0.18), i * 80));
+    },
+    // Ascending sweep when Scatter Shot activates
+    scatterActivate() {
+      tone(400, 'square', 0.4, 0.22, 1200);
+    },
+    // Bright chime on pickup collection
+    pickup() {
+      tone(1400, 'sine', 0.1, 0.12, 1800);
+    },
+    // Descending tones on game over / reset
+    gameOver() {
+      [440, 330, 220, 110].forEach((f, i) => setTimeout(() => tone(f, 'sawtooth', 0.25, 0.18), i * 130));
+    },
+  };
+})();
 
 let isPaused = true;
 
@@ -110,6 +204,13 @@ function syncShootControls() {
   autoShootSwitch?.setAttribute('aria-pressed', String(isAutoOn));
   manualShootBtn?.classList.toggle('hidden', isAutoOn);
   manualShootBtn?.classList.toggle('active', !isAutoOn);
+}
+
+function syncSoundSwitch() {
+  const soundSwitch = document.querySelector('.phone-switch[data-action="sound"]');
+  if (!soundSwitch) return;
+  soundSwitch.classList.toggle('on', settingsState.soundEnabled);
+  soundSwitch.setAttribute('aria-pressed', String(settingsState.soundEnabled));
 }
 
 function tryShoot() {
@@ -164,6 +265,10 @@ phoneSwitches.forEach((switchBtn) => {
     if (switchBtn.dataset.action === 'autoShoot') {
       settingsState.autoShoot = enabled;
       syncShootControls();
+    }
+
+    if (switchBtn.dataset.action === 'sound') {
+      settingsState.soundEnabled = enabled;
     }
   });
 });
@@ -260,12 +365,14 @@ function fireBullet() {
   const angle = Math.atan2(dy, dx) || 0;
 
   if (player.weapon === 'Scatter Shot') {
+    SoundEngine.shootScatter();
     spawnProjectile(angle - 0.18, 330, 25, 5, '#ffd166');
     spawnProjectile(angle, 360, 25, 5, '#ffe082');
     spawnProjectile(angle + 0.18, 330, 25, 5, '#ffd166');
     return;
   }
 
+  SoundEngine.shoot();
   spawnProjectile(angle, 380, 12, 5, '#8ec5ff', 2);
 }
 
@@ -344,6 +451,7 @@ function update(dt) {
       player.hp -= hitDamage;
       player.damageGraceTimer = 3;
       enemy.attackTimer = enemy.attackCooldown;
+      SoundEngine.playerHit();
       particles.push({ x: player.x, y: player.y, vx: rand(-80, 80), vy: rand(-80, 80), life: 0.35, color: '#ff6b6b' });
       particles.push({ x: player.x, y: player.y, vx: rand(-30, 30), vy: rand(-90, -25), life: 0.55, color: '#ff6b6b', text: String(hitDamage), textColor: '#ff6b6b' });
       if (player.hp <= 0) resetRun();
@@ -362,6 +470,7 @@ function update(dt) {
       const d = Math.hypot(p.x - enemy.x, p.y - enemy.y);
       if (d < enemy.hitboxRadius + p.radius) {
         enemy.hp -= p.damage;
+        SoundEngine.enemyHit();
         particles.push({ x: p.x, y: p.y, vx: rand(-60, 60), vy: rand(-60, 60), life: 0.2, color: p.color || '#7af5b5' });
         particles.push({ x: p.x, y: p.y, vx: rand(-35, 35), vy: rand(-80, -20), life: 0.45, color: '#7af5b5', text: String(Math.max(1, Math.floor(p.damage))), textColor: '#7af5b5' });
         if (p.pierce && p.pierce > 0) {
@@ -371,6 +480,7 @@ function update(dt) {
           projectiles.splice(i, 1);
         }
         if (enemy.hp <= 0) {
+          SoundEngine.enemyDeath();
           enemies.splice(j, 1);
           player.xp += 5;
           if (player.weapon !== 'Scatter Shot') {
@@ -380,6 +490,7 @@ function update(dt) {
             player.charge = 0;
             player.weapon = 'Scatter Shot';
             player.scatterTimer = player.scatterDuration;
+            SoundEngine.scatterActivate();
             particles.push({ x: player.x, y: player.y, vx: 0, vy: 0, life: 0.6, color: '#ffd166' });
           }
           if (Math.random() < 0.5) spawnPickup(enemy.x, enemy.y);
@@ -405,6 +516,21 @@ function update(dt) {
     if (p.life <= 0) particles.splice(i, 1);
   }
 
+  // Pickup collection — player walks over glowing shards to restore HP
+  for (let i = pickups.length - 1; i >= 0; i -= 1) {
+    const item = pickups[i];
+    item.life -= dt;
+    const d = Math.hypot(item.x - player.x, item.y - player.y);
+    if (d < item.radius + player.radius) {
+      player.hp = Math.min(player.maxHp, player.hp + 12);
+      SoundEngine.pickup();
+      particles.push({ x: item.x, y: item.y, vx: rand(-50, 50), vy: rand(-80, -20), life: 0.4, color: '#70d6ff' });
+      pickups.splice(i, 1);
+    } else if (item.life <= 0) {
+      pickups.splice(i, 1);
+    }
+  }
+
   levelUpIfReady();
   updateUI();
 }
@@ -419,6 +545,7 @@ function levelUpIfReady() {
     player.maxHp += 8;
     player.hp = Math.min(player.hp + 12, player.maxHp);
     player.cooldown = Math.max(0.12, player.cooldown - 0.02);
+    SoundEngine.levelUp();
     particles.push({ x: player.x, y: player.y, vx: 0, vy: 0, life: 0.6, color: '#77d7ff' });
   }
 }
@@ -584,6 +711,7 @@ function render() {
 }
 
 function resetRun() {
+  SoundEngine.gameOver();
   player.x = W / 2;
   player.y = H / 2;
   player.hp = player.maxHp;
@@ -630,5 +758,6 @@ playBtn?.addEventListener('click', () => {
 });
 
 syncShootControls();
+syncSoundSwitch();
 updateUI();
 requestAnimationFrame(loop);
