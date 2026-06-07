@@ -1,0 +1,24 @@
+{
+  "name": "survivors",
+  "version": "1.0.0",
+  "description": "A lightweight 2D top-down survivor game prototype built with plain HTML, CSS, and JavaScript.",
+  "main": "debug.spec.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Eduardo307-alt/survivors.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Eduardo307-alt/survivors/issues"
+  },
+  "homepage": "https://github.com/Eduardo307-alt/survivors#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

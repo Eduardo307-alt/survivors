@@ -102,7 +102,7 @@ const settingsState = {
   autoShoot: true,
 };
 
-let isPaused = false;
+let isPaused = true;
 
 function syncShootControls() {
   const isAutoOn = settingsState.autoShoot;
@@ -188,6 +188,7 @@ const player = {
   maxHp: 100,
   xp: 0,
   level: 1,
+  damageGraceTimer: 0,
   cooldown: 0.35,
   fireTimer: 0,
   damage: 18,
@@ -228,6 +229,8 @@ function spawnEnemy() {
     hp: maxHp,
     maxHp,
     color: Math.random() > 0.6 ? '#ff7b7b' : '#ffd166',
+    attackCooldown: 2,
+    attackTimer: 0,
   });
 }
 
@@ -257,13 +260,13 @@ function fireBullet() {
   const angle = Math.atan2(dy, dx) || 0;
 
   if (player.weapon === 'Scatter Shot') {
-    spawnProjectile(angle - 0.18, 330, player.damage, 5, '#ffd166');
-    spawnProjectile(angle, 360, player.damage, 5, '#ffe082');
-    spawnProjectile(angle + 0.18, 330, player.damage, 5, '#ffd166');
+    spawnProjectile(angle - 0.18, 330, 25, 5, '#ffd166');
+    spawnProjectile(angle, 360, 25, 5, '#ffe082');
+    spawnProjectile(angle + 0.18, 330, 25, 5, '#ffd166');
     return;
   }
 
-  spawnProjectile(angle, 380, player.damage + 6, 5, '#8ec5ff', 2);
+  spawnProjectile(angle, 380, 12, 5, '#8ec5ff', 2);
 }
 
 function nearestEnemy() {
@@ -314,6 +317,14 @@ function update(dt) {
   }
   player.fireTimer -= dt;
 
+  if (player.damageGraceTimer > 0) {
+    player.damageGraceTimer -= dt;
+  }
+
+  if (player.damageGraceTimer <= 0 && player.hp < player.maxHp) {
+    player.hp = Math.min(player.maxHp, player.hp + 2 * dt);
+  }
+
   for (const p of projectiles) {
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -326,9 +337,15 @@ function update(dt) {
     enemy.x += (dx / d) * enemy.speed * dt;
     enemy.y += (dy / d) * enemy.speed * dt;
 
-    if (d < enemy.hitboxRadius + player.radius) {
-      player.hp -= 8 * dt;
+    enemy.attackTimer -= dt;
+
+    if (d < enemy.hitboxRadius + player.radius && enemy.attackTimer <= 0) {
+      const hitDamage = 8;
+      player.hp -= hitDamage;
+      player.damageGraceTimer = 3;
+      enemy.attackTimer = enemy.attackCooldown;
       particles.push({ x: player.x, y: player.y, vx: rand(-80, 80), vy: rand(-80, 80), life: 0.35, color: '#ff6b6b' });
+      particles.push({ x: player.x, y: player.y, vx: rand(-30, 30), vy: rand(-90, -25), life: 0.55, color: '#ff6b6b', text: String(hitDamage), textColor: '#ff6b6b' });
       if (player.hp <= 0) resetRun();
     }
   }
@@ -346,6 +363,7 @@ function update(dt) {
       if (d < enemy.hitboxRadius + p.radius) {
         enemy.hp -= p.damage;
         particles.push({ x: p.x, y: p.y, vx: rand(-60, 60), vy: rand(-60, 60), life: 0.2, color: p.color || '#7af5b5' });
+        particles.push({ x: p.x, y: p.y, vx: rand(-35, 35), vy: rand(-80, -20), life: 0.45, color: '#7af5b5', text: String(Math.max(1, Math.floor(p.damage))), textColor: '#7af5b5' });
         if (p.pierce && p.pierce > 0) {
           p.pierce -= 1;
           if (p.pierce <= 0) projectiles.splice(i, 1);
@@ -354,7 +372,7 @@ function update(dt) {
         }
         if (enemy.hp <= 0) {
           enemies.splice(j, 1);
-          player.xp += 10;
+          player.xp += 5;
           if (player.weapon !== 'Scatter Shot') {
             player.charge += 0.5;
           }
@@ -374,22 +392,6 @@ function update(dt) {
         }
         break;
       }
-    }
-  }
-
-  for (let i = pickups.length - 1; i >= 0; i -= 1) {
-    const item = pickups[i];
-    item.life -= dt;
-    if (item.life <= 0) {
-      pickups.splice(i, 1);
-      continue;
-    }
-
-    const d = Math.hypot(player.x - item.x, player.y - item.y);
-    if (d < player.radius + item.radius + 8) {
-      pickups.splice(i, 1);
-      player.hp = Math.min(player.maxHp, player.hp + 8);
-      particles.push({ x: item.x, y: item.y, vx: rand(-60, 60), vy: rand(-60, 60), life: 0.4, color: '#70d6ff' });
     }
   }
 
@@ -457,11 +459,11 @@ function drawBackground() {
 function drawPlayer() {
   ctx.save();
   ctx.translate(player.x, player.y);
-  ctx.fillStyle = '#7af5b5';
+  ctx.fillStyle = '#98e6ff';
   ctx.fillRect(-16, -16, 32, 32);
-  ctx.fillStyle = '#1f2937';
+  ctx.fillStyle = '#4ca3d0';
   ctx.fillRect(-8, -8, 16, 16);
-  ctx.fillStyle = '#77d7ff';
+  ctx.fillStyle = '#dff8ff';
   ctx.fillRect(-2, -18, 4, 10);
   ctx.restore();
 }
@@ -488,7 +490,7 @@ function drawEnemies() {
 
 function drawProjectiles() {
   for (const p of projectiles) {
-    ctx.fillStyle = p.color || '#ffe082';
+    ctx.fillStyle = p.color || '#00e1ff';
     ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
   }
 }
@@ -507,16 +509,27 @@ function drawPickups() {
 
 function drawParticles() {
   for (const p of particles) {
-    ctx.globalAlpha = Math.max(0, p.life / 0.5);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, 4, 4);
+    const alpha = Math.max(0, p.life / 0.5);
+    ctx.globalAlpha = Math.min(1, alpha * 1.15);
+    if (p.text) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 12px "Press Start 2P"';
+      ctx.fillStyle = p.textColor || p.color || '#ffffff';
+      ctx.fillText(p.text, p.x, p.y);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, 4, 4);
+    }
     ctx.globalAlpha = 1;
   }
 }
 
 function drawHudText() {
   ctx.save();
-  ctx.fillStyle = 'rgba(239, 246, 255, 0.9)';
+  ctx.fillStyle = 'rgb(255, 255, 255)';
   ctx.font = '12px "Press Start 2P"';
   ctx.fillText(`SURVIVE: ${Math.floor(time)}s`, 18, 28);
   ctx.fillText(`LEVEL ${player.level}`, 18, 48);
@@ -554,7 +567,7 @@ function drawHudText() {
   ctx.fillStyle = '#ffd166';
   ctx.fillRect(18, barY + 14, chargeW * scatterFill, chargeH);
 
-  ctx.fillStyle = 'rgba(239, 246, 255, 0.9)';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   ctx.fillText('CHARGE', 18, H - 58);
   ctx.fillText(player.scatterTimer > 0 ? 'SCATTER' : 'PIERCE', 18, H - 40);
   ctx.restore();
@@ -598,6 +611,23 @@ function loop(now) {
   render();
   requestAnimationFrame(loop);
 }
+
+const loadingScreen = document.getElementById('loadingScreen');
+const startScreen = document.getElementById('startScreen');
+const playBtn = document.getElementById('playBtn');
+
+function startGame() {
+   isPaused = false;
+   loadingScreen?.classList.add('hidden');
+   setTimeout(() => loadingScreen?.remove(), 420);
+   document.documentElement.requestFullscreen?.();
+}
+
+playBtn?.addEventListener('click', () => {
+   startScreen?.classList.add('hidden');
+   loadingScreen?.classList.remove('hidden');
+   setTimeout(startGame, 1300);
+});
 
 syncShootControls();
 updateUI();

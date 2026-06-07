@@ -13,6 +13,26 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="startScreen" class="start-screen">
+      <div class="start-content">
+        <div class="start-title">
+          <span class="title-word title-pixel">PIXEL</span>
+          <span class="title-word title-survivors">SURVIVORS</span>
+        </div>
+        <p class="start-sub">Top-down survivor prototype</p>
+        <button id="playBtn" class="play-btn" type="button">PLAY</button>
+      </div>
+    </div>
+
+    <div id="loadingScreen" class="loading-screen hidden" aria-live="polite">
+      <div class="loading-card">
+        <p class="eyebrow">Loading</p>
+        <h2>PIXEL SURVIVORS</h2>
+        <p class="loading-copy">Preparing the arena…</p>
+        <div class="loading-bar"><span></span></div>
+      </div>
+    </div>
+
     <main class="app-shell">
       <div id="settingsModal" class="settings-modal" aria-hidden="true">
         <aside class="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
