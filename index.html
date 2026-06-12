@@ -1,107 +1,45 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pixel Survivors</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div id="startScreen" class="start-screen">
-      <div class="start-content">
-        <div class="start-title">
-          <span class="title-word title-pixel">PIXEL</span>
-          <span class="title-word title-survivors">SURVIVORS</span>
-        </div>
-        <p class="start-sub">Top-down survivor prototype</p>
-        <button id="playBtn" class="play-btn" type="button">PLAY</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pixel Survivors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="startScreen" class="start-screen">
+    <div class="start-content">
+      <div class="start-title">
+        <span class="title-word title-pixel">PIXEL</span>
+        <span class="title-word title-survivors">SURVIVORS</span>
       </div>
+      <p class="start-sub">Top-down survivor prototype</p>
+      <button id="playBtn" class="play-btn" type="button">PLAY</button>
     </div>
+  </div>
 
-    <div id="loadingScreen" class="loading-screen hidden" aria-live="polite">
-      <div class="loading-card">
-        <p class="eyebrow">Loading</p>
-        <h2>PIXEL SURVIVORS</h2>
-        <p class="loading-copy">Preparing the arena…</p>
-        <div class="loading-bar"><span></span></div>
-      </div>
+  <div id="loadingScreen" class="loading-screen hidden" aria-live="polite">
+    <div class="loading-card">
+      <p class="eyebrow">Loading</p>
+      <h2>PIXEL SURVIVORS</h2>
+      <p class="loading-copy">Preparing the arena…</p>
+      <div class="loading-bar"><span></span></div>
+      <!-- New canvas element for particle effects -->
+      <canvas id="particleCanvas" width="900" height="600" style="position: absolute; top: 0; left: 0; pointer-events: none; z-index: 1;"></canvas>
     </div>
+  </div>
 
-    <main class="app-shell">
-      <div id="settingsModal" class="settings-modal" aria-hidden="true">
-        <aside class="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
-          <button id="closeSettingsBtn" class="settings-close" type="button" aria-label="Close settings">×</button>
-          <p class="eyebrow">Game options</p>
-          <h2>SETTINGS</h2>
-          <div class="settings-list">
-            <label class="settings-row">
-              <span>Fullscreen</span>
-              <button class="phone-switch" type="button" data-action="fullscreen" aria-pressed="false"></button>
-            </label>
-            <label class="settings-row">
-              <span>Glow Effects</span>
-              <button class="phone-switch" type="button" data-action="glow" aria-pressed="true"></button>
-            </label>
-            <label class="settings-row">
-              <span>Auto Shoot</span>
-              <button id="autoShootSwitch" class="phone-switch on" type="button" data-action="autoShoot" aria-pressed="true"></button>
-            </label>
-            <label class="settings-row">
-              <span>Sound Effects</span>
-              <button class="phone-switch on" type="button" data-action="sound" aria-pressed="true"></button>
-            </label>
-          </div>
-          <p class="small-note">Tap a switch to flip the option on or off inside this window.</p>
-        </aside>
-      </div>
+  <main class="app-shell">
+    <!-- ... existing content ... -->
+  </main>
 
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Top-down survivor prototype</p>
-          <h1>PIXEL SURVIVORS</h1>
-        </div>
-        <div class="topbar-actions">
-          <button class="settings-btn" type="button" aria-label="Settings">
-            <span class="settings-icon">⚙️</span>
-            <span class="settings-label">Settings</span>
-          </button>
-          <p class="hint">WASD to move • Survive the swarm • Collect XP to level up</p>
-        </div>
-      </header>
-
-      <section class="game-panel">
-        <div class="game-stage">
-          <canvas id="game" width="960" height="540"></canvas>
-          <button id="manualShootBtn" class="shoot-btn game-shoot-btn" type="button" aria-label="Shoot" title="Shoot"><span class="shoot-icon">●</span></button>
-          <div id="mobileJoystick" class="mobile-joystick" aria-label="Touch joystick">
-            <div id="mobileStick" class="mobile-stick"></div>
-          </div>
-        </div>
-        <aside class="hud-card">
-          <h2>Runes</h2>
-          <ul>
-            <li>Auto-fire at nearby foes</li>
-            <li>Level up for speed and damage</li>
-            <li>Recover HP from glowing shards</li>
-          </ul>
-          <div class="stat-grid">
-            <button id="fullscreenBtn" class="fullscreen-btn" type="button">Fullscreen</button>
-            <div class="stat-box"><span>Time</span><strong id="timeStat">0s</strong></div>
-            <div class="stat-box"><span>Level</span><strong id="levelStat">1</strong></div>
-            <div class="stat-box"><span>HP</span><strong id="hpStat">100</strong></div>
-            <div class="stat-box"><span>XP</span><strong id="xpStat">0</strong></div>
-          </div>
-          <p class="small-note">Tip: gather the blue shards to keep your run alive.</p>
-        </aside>
-      </section>
-    </main>
-
-    <script src="game.js"></script>
-  </body>
+  <script src="game.js"></script>
+  <script src="loading-effects.js"></script>
+</body>
 </html>
