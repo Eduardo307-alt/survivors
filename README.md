@@ -20,5 +20,4 @@ A lightweight 2D top-down survivor game prototype built with plain HTML, CSS, an
 
 - Add more enemy types
 - Add weapon upgrades and skill cards
-- Add sound effects and a start screen
 - Add a score / high-score system

@@ -402,8 +402,8 @@ function update(dt) {
     spawnEnemy();
   }
 
-  const moveX = (keys['a'] ? -1 : 0) + (keys['d'] ? 1 : 0) + (touchState.active ? touchState.x : 0);
-  const moveY = (keys['w'] ? -1 : 0) + (keys['s'] ? 1 : 0) + (touchState.active ? touchState.y : 0);
+const moveX = (keys['arrowleft'] ? -1 : 0) + (keys['arrowright'] ? 1 : 0) + (keys['a'] ? -1 : 0) + (keys['d'] ? 1 : 0) + (touchState.active ? touchState.x : 0);
+const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['w'] ? -1 : 0) + (keys['s'] ? 1 : 0) + (touchState.active ? touchState.y : 0);
   const len = Math.hypot(moveX, moveY) || 1;
   player.x += (moveX / len) * player.speed * dt;
   player.y += (moveY / len) * player.speed * dt;
