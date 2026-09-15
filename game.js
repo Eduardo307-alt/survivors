@@ -6,6 +6,11 @@ const H = canvas.height;
 
 const keys = {};
 const touchState = { active: false, x: 0, y: 0 };
+
+function lerp(from, to, amount) {
+  return from + (to - from) * amount;
+}
+
 window.addEventListener('keydown', (e) => { keys[e.key.toLowerCase()] = true; });
 window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
@@ -294,6 +299,7 @@ const player = {
   xp: 0,
   level: 1,
   damageGraceTimer: 0,
+  hitShakeTimer: 0,
   cooldown: 0.35,
   fireTimer: 0,
   damage: 18,
@@ -310,6 +316,7 @@ const pickups = [];
 const particles = [];
 
 let time = 0;
+let kills = 0;
 let spawnTimer = 0;
 let lastTime = performance.now();
 
@@ -333,9 +340,12 @@ function spawnEnemy() {
     speed: 55 + Math.random() * 45,
     hp: maxHp,
     maxHp,
+    displayHp: 1,
     color: Math.random() > 0.6 ? '#ff7b7b' : '#ffd166',
     attackCooldown: 2,
     attackTimer: 0,
+    hitShakeTimer: 0,
+    hitShakeSeed: Math.random() * 1000,
   });
 }
 
@@ -424,6 +434,14 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
   }
   player.fireTimer -= dt;
 
+  if (typeof player.hpDisplay !== 'number') player.hpDisplay = player.hp / player.maxHp;
+  if (typeof player.chargeDisplay !== 'number') player.chargeDisplay = Math.min(1, player.charge / player.maxCharge);
+  if (typeof player.scatterDisplay !== 'number') player.scatterDisplay = player.scatterTimer > 0 ? Math.max(0, player.scatterTimer / player.scatterDuration) : 0;
+
+  player.hpDisplay = lerp(player.hpDisplay, Math.max(0, Math.min(1, player.hp / player.maxHp)), 0.18);
+  player.chargeDisplay = lerp(player.chargeDisplay, Math.min(1, player.charge / player.maxCharge), 0.18);
+  player.scatterDisplay = lerp(player.scatterDisplay, player.scatterTimer > 0 ? Math.max(0, player.scatterTimer / player.scatterDuration) : 0, 0.18);
+
   if (player.damageGraceTimer > 0) {
     player.damageGraceTimer -= dt;
   }
@@ -437,7 +455,11 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
     p.y += p.vy * dt;
   }
 
+  player.hitShakeTimer = Math.max(0, player.hitShakeTimer - dt);
+
   for (const enemy of enemies) {
+    enemy.hitShakeTimer = Math.max(0, (enemy.hitShakeTimer ?? 0) - dt);
+    enemy.displayHp = lerp(enemy.displayHp ?? (enemy.hp / enemy.maxHp), Math.max(0, enemy.hp / enemy.maxHp), 0.2);
     const dx = player.x - enemy.x;
     const dy = player.y - enemy.y;
     const d = Math.hypot(dx, dy) || 1;
@@ -450,6 +472,7 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
       const hitDamage = 8;
       player.hp -= hitDamage;
       player.damageGraceTimer = 3;
+      player.hitShakeTimer = 0.28;
       enemy.attackTimer = enemy.attackCooldown;
       SoundEngine.playerHit();
       particles.push({ x: player.x, y: player.y, vx: rand(-80, 80), vy: rand(-80, 80), life: 0.35, color: '#ff6b6b' });
@@ -470,6 +493,8 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
       const d = Math.hypot(p.x - enemy.x, p.y - enemy.y);
       if (d < enemy.hitboxRadius + p.radius) {
         enemy.hp -= p.damage;
+        enemy.hitShakeTimer = 0.22;
+        enemy.hitShakeSeed = Math.random() * 1000;
         SoundEngine.enemyHit();
         particles.push({ x: p.x, y: p.y, vx: rand(-60, 60), vy: rand(-60, 60), life: 0.2, color: p.color || '#7af5b5' });
         particles.push({ x: p.x, y: p.y, vx: rand(-35, 35), vy: rand(-80, -20), life: 0.45, color: '#7af5b5', text: String(Math.max(1, Math.floor(p.damage))), textColor: '#7af5b5' });
@@ -482,6 +507,7 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
         if (enemy.hp <= 0) {
           SoundEngine.enemyDeath();
           enemies.splice(j, 1);
+          kills += 1;
           player.xp += 5;
           if (player.weapon !== 'Scatter Shot') {
             player.charge += 0.5;
@@ -597,14 +623,18 @@ function drawPlayer() {
 
 function drawEnemies() {
   for (const enemy of enemies) {
+    const shake = (enemy.hitShakeTimer ?? 0) > 0
+      ? Math.sin(performance.now() * 0.05 + (enemy.hitShakeSeed ?? 0)) * (10 * (enemy.hitShakeTimer ?? 0))
+      : 0;
+
     ctx.save();
-    ctx.translate(enemy.x, enemy.y);
+    ctx.translate(enemy.x + shake, enemy.y + shake * 0.45);
     ctx.fillStyle = enemy.color;
     ctx.fillRect(-enemy.radius, -enemy.radius, enemy.radius * 2, enemy.radius * 2);
     ctx.fillStyle = '#1f2937';
     ctx.fillRect(-enemy.radius * 0.45, -enemy.radius * 0.45, enemy.radius * 0.9, enemy.radius * 0.9);
 
-    const hpRatio = Math.max(0, enemy.hp / enemy.maxHp);
+    const hpRatio = enemy.displayHp ?? Math.max(0, enemy.hp / enemy.maxHp);
     const barW = enemy.radius * 2;
     const barH = 4;
     ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
@@ -655,17 +685,26 @@ function drawParticles() {
 }
 
 function drawHudText() {
+  const shake = player.hitShakeTimer > 0 ? Math.sin(performance.now() * 0.06) * (8 * player.hitShakeTimer) : 0;
+
   ctx.save();
+  ctx.translate(shake, 0);
   ctx.fillStyle = 'rgb(255, 255, 255)';
   ctx.font = '12px "Press Start 2P"';
   ctx.fillText(`SURVIVE: ${Math.floor(time)}s`, 18, 28);
   ctx.fillText(`LEVEL ${player.level}`, 18, 48);
   ctx.fillText(`WEAPON: ${player.weapon}`, 18, 68);
 
+  ctx.textAlign = 'center';
+  ctx.font = '10px "Press Start 2P"';
+  ctx.fillText(`KILLS ${kills}`, W / 2, 28);
+  ctx.textAlign = 'left';
+
   const hpBarW = 120;
   const hpBarH = 10;
-  const hpPercent = Math.max(0, Math.min(1, player.hp / player.maxHp));
+  const hpPercent = player.hpDisplay;
   const hpBarY = H - 82;
+  const pulse = 0.6 + Math.sin(performance.now() * 0.004) * 0.25;
 
   ctx.fillStyle = 'rgba(239, 246, 255, 0.9)';
   ctx.fillText('HP', 18, H - 94);
@@ -673,26 +712,32 @@ function drawHudText() {
 
   ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
   ctx.fillRect(18, hpBarY, hpBarW, hpBarH);
-  ctx.shadowBlur = 10;
-  ctx.shadowColor = 'rgba(134, 239, 172, 0.8)';
-  ctx.fillStyle = 'rgba(134, 239, 172, 0.95)';
+  ctx.shadowBlur = player.hitShakeTimer > 0 ? 16 : 10 * pulse;
+  ctx.shadowColor = player.hitShakeTimer > 0 ? 'rgba(255, 107, 107, 0.9)' : 'rgba(134, 239, 172, 0.8)';
+  ctx.fillStyle = player.hitShakeTimer > 0 ? 'rgba(255, 107, 107, 0.95)' : 'rgba(134, 239, 172, 0.95)';
   ctx.fillRect(18, hpBarY, hpBarW * hpPercent, hpBarH);
   ctx.shadowBlur = 0;
 
   const chargeW = 120;
   const chargeH = 10;
-  const chargeFill = Math.min(1, player.charge / player.maxCharge);
+  const chargeFill = player.chargeDisplay;
   const barY = H - 38;
   ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
   ctx.fillRect(18, barY, chargeW, chargeH);
+  ctx.shadowBlur = 12 * pulse;
+  ctx.shadowColor = 'rgba(122, 245, 181, 0.8)';
   ctx.fillStyle = '#7af5b5';
   ctx.fillRect(18, barY, chargeW * chargeFill, chargeH);
+  ctx.shadowBlur = 0;
 
-  const scatterFill = player.scatterTimer > 0 ? Math.max(0, player.scatterTimer / player.scatterDuration) : 0;
+  const scatterFill = player.scatterDisplay;
   ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
   ctx.fillRect(18, barY + 14, chargeW, chargeH);
+  ctx.shadowBlur = 14 * pulse;
+  ctx.shadowColor = 'rgba(255, 209, 102, 0.9)';
   ctx.fillStyle = '#ffd166';
   ctx.fillRect(18, barY + 14, chargeW * scatterFill, chargeH);
+  ctx.shadowBlur = 0;
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
   ctx.fillText('CHARGE', 18, H - 58);
@@ -714,7 +759,11 @@ function resetRun() {
   SoundEngine.gameOver();
   player.x = W / 2;
   player.y = H / 2;
+  kills = 0;
   player.hp = player.maxHp;
+  player.hpDisplay = 1;
+  player.chargeDisplay = 0;
+  player.scatterDisplay = 0;
   player.xp = 0;
   player.level = 1;
   player.speed = 220;
