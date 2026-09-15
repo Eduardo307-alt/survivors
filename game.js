@@ -686,18 +686,21 @@ function drawParticles() {
 
 function drawHudText() {
   const shake = player.hitShakeTimer > 0 ? Math.sin(performance.now() * 0.06) * (8 * player.hitShakeTimer) : 0;
+  const canvasScale = Math.min(1, canvas.clientWidth / W || 1);
+  const hudScale = Math.max(0.45, canvasScale);
+  const hudInset = 18 / hudScale;
 
   ctx.save();
   ctx.translate(shake, 0);
   ctx.fillStyle = 'rgb(255, 255, 255)';
-  ctx.font = '12px "Press Start 2P"';
-  ctx.fillText(`SURVIVE: ${Math.floor(time)}s`, 18, 28);
-  ctx.fillText(`LEVEL ${player.level}`, 18, 48);
-  ctx.fillText(`WEAPON: ${player.weapon}`, 18, 68);
+  ctx.font = `${12 / hudScale}px "Press Start 2P"`;
+  ctx.fillText(`SURVIVE: ${Math.floor(time)}s`, hudInset, 28 / hudScale);
+  ctx.fillText(`LEVEL ${player.level}`, hudInset, 48 / hudScale);
+  ctx.fillText(`WEAPON: ${player.weapon}`, hudInset, 68 / hudScale);
 
   ctx.textAlign = 'center';
-  ctx.font = '10px "Press Start 2P"';
-  ctx.fillText(`KILLS ${kills}`, W / 2, 28);
+  ctx.font = `${10 / hudScale}px "Press Start 2P"`;
+  ctx.fillText(`KILLS ${kills}`, W / 2, 28 / hudScale);
   ctx.textAlign = 'left';
 
   const hpBarW = 120;
