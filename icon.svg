@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>Pixel Survivors app icon</title>
+  <rect width="512" height="512" rx="96" fill="#0d1117"/>
+  <rect x="48" y="48" width="416" height="416" rx="64" fill="#172132" stroke="#77d7ff" stroke-width="12"/>
+  <path d="M256 112 288 176 360 184 308 234 322 306 256 272 190 306 204 234 152 184 224 176Z" fill="#7af5b5" stroke="#eff6ff" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M256 150v120M196 208h120" stroke="#0d1117" stroke-width="16" stroke-linecap="square"/>
+  <rect x="100" y="348" width="312" height="22" rx="11" fill="#ffa76b"/>
+  <rect x="100" y="348" width="198" height="22" rx="11" fill="#77d7ff"/>
+  <circle cx="256" cy="409" r="13" fill="#eff6ff"/>
+</svg>
