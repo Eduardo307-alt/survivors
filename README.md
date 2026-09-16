@@ -8,7 +8,9 @@ A lightweight 2D top-down survivor game prototype built with plain HTML, CSS, an
    npm start
 2. Open http://localhost:3000
 
-Use the **Download** button at the bottom of the page to install Pixel Survivors as an offline app when the browser supports PWA installation. If installation is not offered, use the browser's install option for this page.
+If port 3000 is already in use, start it on another port with `PORT=3001 npm start`, then open http://localhost:3001.
+
+Use the **Install App** button below Play to install Pixel Survivors as an app. The app shell is cached by the service worker, so after the first online visit it can launch and play offline. On browsers that do not provide an install prompt, use the browser's **Add to Home Screen** or **Install** menu item.
 
 ## Current gameplay
 

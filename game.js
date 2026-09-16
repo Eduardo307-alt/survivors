@@ -114,7 +114,10 @@ let installPrompt = null;
 window.addEventListener('beforeinstallprompt', (event) => {
   event.preventDefault();
   installPrompt = event;
-  if (downloadBtn) downloadBtn.disabled = false;
+  if (downloadBtn) {
+    downloadBtn.disabled = false;
+    downloadBtn.textContent = 'Install App';
+  }
 });
 
 window.addEventListener('appinstalled', () => {
@@ -125,18 +128,35 @@ window.addEventListener('appinstalled', () => {
   }
 });
 
-downloadBtn?.addEventListener('click', () => {
-  const downloadLink = document.createElement('a');
-  downloadLink.href = './pixel-survivors.zip';
-  downloadLink.download = 'pixel-survivors.zip';
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  downloadLink.remove();
-  downloadBtn.textContent = 'Downloaded';
-  setTimeout(() => {
-    if (downloadBtn.textContent === 'Downloaded') downloadBtn.textContent = 'Download';
-  }, 2200);
-});
+async function installApp() {
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+    downloadBtn.textContent = 'Installed';
+    downloadBtn.disabled = true;
+    return;
+  }
+
+  if (!installPrompt) {
+    downloadBtn.textContent = 'Use Browser Menu';
+    window.setTimeout(() => {
+      if (downloadBtn && !installPrompt) downloadBtn.textContent = 'Install App';
+    }, 3000);
+    return;
+  }
+
+  downloadBtn.disabled = true;
+  await installPrompt.prompt();
+  const choice = await installPrompt.userChoice;
+  installPrompt = null;
+
+  if (choice.outcome === 'accepted') {
+    downloadBtn.textContent = 'Installing';
+  } else {
+    downloadBtn.textContent = 'Install App';
+    downloadBtn.disabled = false;
+  }
+}
+
+downloadBtn?.addEventListener('click', installApp);
 
 // ── Sound Engine ──────────────────────────────────────────────────────────────
 const SoundEngine = (() => {
