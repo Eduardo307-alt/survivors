@@ -83,10 +83,7 @@ joystick.addEventListener('pointerup', (e) => {
 });
 
 joystick.addEventListener('pointercancel', resetTouchInput);
-joystick.addEventListener('touchstart', handleTouchStart, { passive: false });
-joystick.addEventListener('touchmove', handleTouchMove, { passive: false });
-joystick.addEventListener('touchend', handleTouchEnd);
-joystick.addEventListener('touchcancel', handleTouchEnd);
+joystick.addEventListener('lostpointercapture', resetTouchInput);
 
 const ui = {
   time: document.getElementById('timeStat'),
@@ -289,11 +286,11 @@ function closeSettingsModal() {
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen?.();
-    fullscreenBtn.textContent = 'Exit Fullscreen';
+    const request = document.documentElement.requestFullscreen?.();
+    request?.catch(() => {});
   } else {
-    document.exitFullscreen?.();
-    fullscreenBtn.textContent = 'Fullscreen';
+    const exit = document.exitFullscreen?.();
+    exit?.catch(() => {});
   }
 }
 
@@ -311,9 +308,11 @@ phoneSwitches.forEach((switchBtn) => {
 
     if (switchBtn.dataset.action === 'fullscreen') {
       if (enabled) {
-        document.documentElement.requestFullscreen?.();
+        const request = document.documentElement.requestFullscreen?.();
+        request?.catch(syncFullscreenControls);
       } else if (document.fullscreenElement) {
-        document.exitFullscreen?.();
+        const exit = document.exitFullscreen?.();
+        exit?.catch(syncFullscreenControls);
       }
     }
 
@@ -334,8 +333,16 @@ manualShootBtn?.addEventListener('click', () => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeSettingsModal();
 });
+function syncFullscreenControls() {
+  const isFullscreen = Boolean(document.fullscreenElement);
+  fullscreenBtn.textContent = isFullscreen ? 'Exit Fullscreen' : 'Fullscreen';
+  const fullscreenSwitch = document.querySelector('.phone-switch[data-action="fullscreen"]');
+  fullscreenSwitch?.classList.toggle('on', isFullscreen);
+  fullscreenSwitch?.setAttribute('aria-pressed', String(isFullscreen));
+}
+
 document.addEventListener('fullscreenchange', () => {
-  fullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+  syncFullscreenControls();
 });
 
 const player = {
@@ -856,6 +863,8 @@ function startGame() {
 playBtn?.addEventListener('click', () => {
    startScreen?.classList.add('hidden');
    loadingScreen?.classList.remove('hidden');
+  const request = document.documentElement.requestFullscreen?.();
+  request?.catch(() => {});
    setTimeout(startGame, 1300);
 });
 

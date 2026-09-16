@@ -173,16 +173,18 @@ h1 { margin: 6px 0 0; font-size: 24px; letter-spacing: 0.18em; }
 
 @media (max-width: 640px) {
   .topbar { gap: 10px; margin-bottom: 12px; }
-  .topbar-actions { width: 100%; align-items: stretch; }
-  .settings-btn { width: 100%; padding: 10px; border-radius: 14px; }
+  .topbar-actions { width: 100%; flex-direction: row; align-items: stretch; gap: 8px; }
+  .fullscreen-btn { flex: 1; margin-bottom: 0; }
+  .settings-btn { width: auto; min-width: 88px; padding: 10px 12px; border-radius: 14px; }
   .hud-card { padding: 12px; border-radius: 14px; }
   .hud-card ul { font-size: 9px; line-height: 1.55; }
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
   .stat-box { padding: 8px; border-radius: 10px; }
   .stat-box span { font-size: 8px; }
   .stat-box strong { font-size: 12px; }
-  .fullscreen-btn, .download-btn { width: 100%; padding: 10px; font-size: 9px; }
-  .game-shoot-btn { width: 58px; height: 58px; right: 12px; bottom: 12px; }
-  .mobile-joystick { left: 12px; bottom: 12px; width: 88px; height: 88px; }
+  .fullscreen-btn, .download-btn { padding: 10px; font-size: 9px; }
+  .game-stage { min-height: min(72vw, 430px); }
+  .game-shoot-btn { width: 64px; height: 64px; right: max(14px, env(safe-area-inset-right)); bottom: max(14px, env(safe-area-inset-bottom)); }
+  .mobile-joystick { left: max(14px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); width: 96px; height: 96px; }
   .mobile-stick { width: 40px; height: 40px; }
 }
