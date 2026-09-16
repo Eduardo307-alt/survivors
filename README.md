@@ -4,9 +4,11 @@ A lightweight 2D top-down survivor game prototype built with plain HTML, CSS, an
 
 ## Run
 
-1. Start a local server from this folder:
-   python3 -m http.server 3000
+1. Start the app from this folder:
+   npm start
 2. Open http://localhost:3000
+
+Use the **Download** button at the bottom of the page to install Pixel Survivors as an offline app when the browser supports PWA installation. If installation is not offered, use the browser's install option for this page.
 
 ## Current gameplay
 
