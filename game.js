@@ -125,22 +125,17 @@ window.addEventListener('appinstalled', () => {
   }
 });
 
-downloadBtn?.addEventListener('click', async () => {
-  if (!installPrompt) {
-    downloadBtn.textContent = 'Use browser menu';
-    setTimeout(() => {
-      if (downloadBtn.textContent === 'Use browser menu') downloadBtn.textContent = 'Download';
-    }, 2200);
-    return;
-  }
-
-  installPrompt.prompt();
-  const { outcome } = await installPrompt.userChoice;
-  if (outcome === 'accepted') {
-    downloadBtn.textContent = 'Installed';
-    downloadBtn.disabled = true;
-  }
-  installPrompt = null;
+downloadBtn?.addEventListener('click', () => {
+  const downloadLink = document.createElement('a');
+  downloadLink.href = './pixel-survivors.zip';
+  downloadLink.download = 'pixel-survivors.zip';
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  downloadLink.remove();
+  downloadBtn.textContent = 'Downloaded';
+  setTimeout(() => {
+    if (downloadBtn.textContent === 'Downloaded') downloadBtn.textContent = 'Download';
+  }, 2200);
 });
 
 // ── Sound Engine ──────────────────────────────────────────────────────────────
