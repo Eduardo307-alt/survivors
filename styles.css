@@ -152,8 +152,8 @@ h1 { margin: 6px 0 0; font-size: 24px; letter-spacing: 0.18em; }
 
 .hud-card { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 4px solid #2a3344; border-radius: 18px; padding: 16px; box-shadow: 0 18px 28px rgba(0,0,0,0.35); }
 .hud-card h2 { margin-top: 0; font-size: 14px; color: var(--accent-2); }
-.fullscreen-btn { width: 100%; border: 2px solid rgba(122,245,181,0.35); border-radius: 10px; padding: 10px; background: rgba(122,245,181,0.08); color: var(--text); font-family: 'Press Start 2P', cursive; font-size: 10px; cursor: pointer; margin-bottom: 10px; }
-.fullscreen-btn:hover { background: rgba(122,245,181,0.18); }
+.fullscreen-btn, .download-btn { width: 100%; border: 2px solid rgba(122,245,181,0.35); border-radius: 10px; padding: 10px; background: rgba(122,245,181,0.08); color: var(--text); font-family: 'Press Start 2P', cursive; font-size: 10px; cursor: pointer; margin-bottom: 10px; }
+.fullscreen-btn:hover, .download-btn:hover { background: rgba(122,245,181,0.18); }
 .hud-card ul { padding-left: 18px; color: #d8e4fb; font-size: 10px; line-height: 1.7; }
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .stat-box { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -178,7 +178,7 @@ h1 { margin: 6px 0 0; font-size: 24px; letter-spacing: 0.18em; }
   .stat-box { padding: 8px; border-radius: 10px; }
   .stat-box span { font-size: 8px; }
   .stat-box strong { font-size: 12px; }
-  .fullscreen-btn { padding: 10px; font-size: 9px; }
+  .fullscreen-btn, .download-btn { padding: 10px; font-size: 9px; }
   .game-shoot-btn { width: 58px; height: 58px; right: 12px; bottom: 12px; }
   .mobile-joystick { left: 12px; bottom: 12px; width: 88px; height: 88px; }
   .mobile-stick { width: 40px; height: 40px; }

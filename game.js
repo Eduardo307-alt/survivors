@@ -96,6 +96,7 @@ const ui = {
 };
 
 const fullscreenBtn = document.getElementById('fullscreenBtn');
+const downloadBtn = document.getElementById('downloadBtn');
 const settingsBtn = document.querySelector('.settings-btn');
 const settingsModal = document.getElementById('settingsModal');
 const closeSettingsBtn = document.getElementById('closeSettingsBtn');
@@ -107,6 +108,40 @@ const settingsState = {
   autoShoot: true,
   soundEnabled: true,
 };
+
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  if (downloadBtn) downloadBtn.disabled = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  if (downloadBtn) {
+    downloadBtn.textContent = 'Installed';
+    downloadBtn.disabled = true;
+  }
+});
+
+downloadBtn?.addEventListener('click', async () => {
+  if (!installPrompt) {
+    downloadBtn.textContent = 'Use browser menu';
+    setTimeout(() => {
+      if (downloadBtn.textContent === 'Use browser menu') downloadBtn.textContent = 'Download';
+    }, 2200);
+    return;
+  }
+
+  installPrompt.prompt();
+  const { outcome } = await installPrompt.userChoice;
+  if (outcome === 'accepted') {
+    downloadBtn.textContent = 'Installed';
+    downloadBtn.disabled = true;
+  }
+  installPrompt = null;
+});
 
 // ── Sound Engine ──────────────────────────────────────────────────────────────
 const SoundEngine = (() => {
