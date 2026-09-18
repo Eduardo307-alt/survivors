@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixel-survivors-v6';
+const CACHE_NAME = 'pixel-survivors-v7';
 const APP_SHELL = [
   './',
   './index.html',
