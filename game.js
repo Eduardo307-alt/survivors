@@ -324,12 +324,12 @@ function closeLevelUpOverlay() {
   levelUpPaused = false;
   levelUpOverlay?.classList.remove('open');
   levelUpOverlay?.setAttribute('aria-hidden', 'true');
-  continueLevelBtn?.focus();
 }
 
 function showLevelUpOverlay() {
   const ability = abilityUpgrades[(player.level - 2) % abilityUpgrades.length];
   ability.apply();
+  if (!levelUpOverlay || !levelUpTitle || !levelUpLabel || !levelUpWeapon || !levelUpDescription) return;
   levelUpOverlay?.classList.remove('weapon-mode');
   levelUpTitle.textContent = 'ABILITY UNLOCKED';
   levelUpLabel.textContent = 'NEW ABILITY';
@@ -342,6 +342,10 @@ function showLevelUpOverlay() {
 }
 
 function showWeaponPickupOverlay(weapon) {
+  if (!levelUpOverlay || !levelUpTitle || !levelUpLabel || !levelUpWeapon || !levelUpDescription) {
+    player.weapon = weapon.name;
+    return;
+  }
   levelUpOverlay?.classList.add('weapon-mode');
   levelUpTitle.textContent = 'WEAPON ACQUIRED';
   levelUpLabel.textContent = 'NEW WEAPON';
