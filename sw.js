@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pixel-survivors-v3';
+const CACHE_NAME = 'pixel-survivors-v6';
 const APP_SHELL = [
   './',
   './index.html',
@@ -37,19 +37,16 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
+    fetch(event.request).then((networkResponse) => {
+      if (networkResponse.ok && new URL(event.request.url).origin === self.location.origin) {
+        const responseCopy = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseCopy));
+      }
+      return networkResponse;
+    }).catch(() => caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) return cachedResponse;
-
-      return fetch(event.request).then((networkResponse) => {
-        if (networkResponse.ok && new URL(event.request.url).origin === self.location.origin) {
-          const responseCopy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseCopy));
-        }
-        return networkResponse;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') return caches.match('./index.html');
-        return Response.error();
-      });
-    }),
+      if (event.request.mode === 'navigate') return caches.match('./index.html');
+      return Response.error();
+    })),
   );
 });

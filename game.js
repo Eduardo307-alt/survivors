@@ -100,6 +100,12 @@ const closeSettingsBtn = document.getElementById('closeSettingsBtn');
 const phoneSwitches = document.querySelectorAll('.phone-switch');
 const manualShootBtn = document.getElementById('manualShootBtn');
 const autoShootSwitch = document.getElementById('autoShootSwitch');
+const levelUpOverlay = document.getElementById('levelUpOverlay');
+const levelUpTitle = document.getElementById('levelUpTitle');
+const levelUpLabel = document.querySelector('.level-up-label');
+const levelUpWeapon = document.getElementById('levelUpWeapon');
+const levelUpDescription = document.getElementById('levelUpDescription');
+const continueLevelBtn = document.getElementById('continueLevelBtn');
 
 const settingsState = {
   autoShoot: true,
@@ -209,8 +215,8 @@ const SoundEngine = (() => {
     shoot() {
       tone(880, 'square', 0.08, 0.15, 440);
     },
-    // Triple burst for Scatter Shot
-    shootScatter() {
+    // Bright burst for multi-projectile weapons
+    shootBurst() {
       tone(760, 'square', 0.07, 0.13, 380);
       setTimeout(() => tone(820, 'square', 0.07, 0.13, 410), 35);
       setTimeout(() => tone(700, 'square', 0.07, 0.13, 350), 70);
@@ -233,10 +239,6 @@ const SoundEngine = (() => {
     levelUp() {
       [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => tone(f, 'square', 0.18, 0.18), i * 80));
     },
-    // Ascending sweep when Scatter Shot activates
-    scatterActivate() {
-      tone(400, 'square', 0.4, 0.22, 1200);
-    },
     // Bright chime on pickup collection
     pickup() {
       tone(1400, 'sine', 0.1, 0.12, 1800);
@@ -249,6 +251,40 @@ const SoundEngine = (() => {
 })();
 
 let isPaused = true;
+let levelUpPaused = false;
+
+const weaponUpgrades = [
+  { name: 'Twin Blades', description: 'Two rapid blades strike the nearest threat.' },
+  { name: 'Arc Pulse', description: 'A ring of energy clears enemies from every direction.' },
+  { name: 'Flame Fan', description: 'A wide burst of burning bolts controls the crowd.' },
+  { name: 'Storm Lance', description: 'A long, piercing lance tears through a line of foes.' },
+];
+
+const abilityUpgrades = [
+  {
+    name: 'Swift Core',
+    description: 'Move 12% faster through the swarm.',
+    apply() { player.speed *= 1.12; },
+  },
+  {
+    name: 'Overclock',
+    description: 'Fire 10% more often with every attack.',
+    apply() { player.cooldown = Math.max(0.08, player.cooldown * 0.9); },
+  },
+  {
+    name: 'Vital Surge',
+    description: 'Increase maximum health by 18 and restore it.',
+    apply() {
+      player.maxHp += 18;
+      player.hp = Math.min(player.maxHp, player.hp + 18);
+    },
+  },
+  {
+    name: 'Power Matrix',
+    description: 'Increase every projectile hit by 20% damage.',
+    apply() { player.damage *= 1.2; },
+  },
+];
 
 function syncShootControls() {
   const isAutoOn = settingsState.autoShoot;
@@ -266,7 +302,7 @@ function syncSoundSwitch() {
 }
 
 function tryShoot() {
-  if (player.fireTimer > 0) return false;
+  if (player.fireTimer > 0 || levelUpPaused) return false;
   fireBullet();
   player.fireTimer = player.cooldown;
   return true;
@@ -282,6 +318,40 @@ function closeSettingsModal() {
   settingsModal?.classList.remove('open');
   settingsModal?.setAttribute('aria-hidden', 'true');
   isPaused = false;
+}
+
+function closeLevelUpOverlay() {
+  levelUpPaused = false;
+  levelUpOverlay?.classList.remove('open');
+  levelUpOverlay?.setAttribute('aria-hidden', 'true');
+  continueLevelBtn?.focus();
+}
+
+function showLevelUpOverlay() {
+  const ability = abilityUpgrades[(player.level - 2) % abilityUpgrades.length];
+  ability.apply();
+  levelUpOverlay?.classList.remove('weapon-mode');
+  levelUpTitle.textContent = 'ABILITY UNLOCKED';
+  levelUpLabel.textContent = 'NEW ABILITY';
+  levelUpWeapon.textContent = ability.name;
+  levelUpDescription.textContent = ability.description;
+  levelUpPaused = true;
+  levelUpOverlay?.classList.add('open');
+  levelUpOverlay?.setAttribute('aria-hidden', 'false');
+  continueLevelBtn?.focus();
+}
+
+function showWeaponPickupOverlay(weapon) {
+  levelUpOverlay?.classList.add('weapon-mode');
+  levelUpTitle.textContent = 'WEAPON ACQUIRED';
+  levelUpLabel.textContent = 'NEW WEAPON';
+  levelUpWeapon.textContent = weapon.name;
+  levelUpDescription.textContent = weapon.description;
+  player.weapon = weapon.name;
+  levelUpPaused = true;
+  levelUpOverlay?.classList.add('open');
+  levelUpOverlay?.setAttribute('aria-hidden', 'false');
+  continueLevelBtn?.focus();
 }
 
 function toggleFullscreen() {
@@ -330,6 +400,7 @@ phoneSwitches.forEach((switchBtn) => {
 manualShootBtn?.addEventListener('click', () => {
   tryShoot();
 });
+continueLevelBtn?.addEventListener('click', closeLevelUpOverlay);
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeSettingsModal();
 });
@@ -351,7 +422,6 @@ const player = {
   radius: 16,
   speed: 220,
   hp: 100,
-  targetIndex: 0,
   maxHp: 100,
   xp: 0,
   level: 1,
@@ -361,10 +431,6 @@ const player = {
   fireTimer: 0,
   damage: 18,
   weapon: 'Pierce Bolt',
-  charge: 0,
-  maxCharge: 10,
-  scatterTimer: 0,
-  scatterDuration: 10,
 };
 
 const projectiles = [];
@@ -407,7 +473,12 @@ function spawnEnemy() {
 }
 
 function spawnPickup(x, y) {
-  pickups.push({ x, y, radius: 7, life: 10, color: '#70d6ff' });
+  pickups.push({ x, y, radius: 7, type: 'health', color: '#70d6ff' });
+}
+
+function spawnWeaponPickup(x, y) {
+  const weapon = weaponUpgrades[Math.floor(Math.random() * weaponUpgrades.length)];
+  pickups.push({ x, y, radius: 9, type: 'weapon', color: '#fff7b2', weapon });
 }
 
 function spawnProjectile(angle, speed, damage, radius = 5, color = '#ffe082', pierce = 0) {
@@ -431,36 +502,53 @@ function fireBullet() {
   const dy = target.y - player.y;
   const angle = Math.atan2(dy, dx) || 0;
 
-  if (player.weapon === 'Scatter Shot') {
-    SoundEngine.shootScatter();
-    spawnProjectile(angle - 0.18, 330, 25, 5, '#ffd166');
-    spawnProjectile(angle, 360, 25, 5, '#ffe082');
-    spawnProjectile(angle + 0.18, 330, 25, 5, '#ffd166');
+  if (player.weapon === 'Flame Fan') {
+    SoundEngine.shootBurst();
+    const spread = 0.42;
+    const count = 5;
+    for (let i = 0; i < count; i += 1) {
+      const offset = (i - (count - 1) / 2) * spread;
+      spawnProjectile(angle + offset, 270, 18, 5, '#ff7657');
+    }
+    return;
+  }
+
+  if (player.weapon === 'Arc Pulse') {
+    SoundEngine.shootBurst();
+    for (let i = 0; i < 8; i += 1) {
+      spawnProjectile((Math.PI * 2 * i) / 8, 230, 16, 6, '#b8a7ff', 1);
+    }
+    return;
+  }
+
+  if (player.weapon === 'Storm Lance') {
+    SoundEngine.shoot();
+    spawnProjectile(angle, 520, 38, 7, '#8ff7ff', 5);
     return;
   }
 
   SoundEngine.shoot();
-  spawnProjectile(angle, 380, 12, 5, '#8ec5ff', 2);
+  if (player.weapon === 'Twin Blades') {
+    spawnProjectile(angle - 0.1, 440, 16, 4, '#8ec5ff', 1);
+    spawnProjectile(angle + 0.1, 440, 16, 4, '#d3f4ff', 1);
+  } else {
+    spawnProjectile(angle, 380, 12, 5, '#8ec5ff', 2);
+  }
 }
 
 function nearestEnemy() {
   if (!enemies.length) return null;
 
-  const sortedEnemies = enemies
-    .map((enemy) => ({
-      enemy,
-      d: Math.hypot(enemy.x - player.x, enemy.y - player.y),
-    }))
-    .sort((a, b) => a.d - b.d)
-    .slice(0, Math.min(5, enemies.length));
-
-  const target = sortedEnemies[player.targetIndex % sortedEnemies.length];
-  player.targetIndex = (player.targetIndex + 1) % sortedEnemies.length;
-  return target ? target.enemy : null;
+  return enemies.reduce((closest, enemy) => {
+    if (!closest) return enemy;
+    const enemyDistance = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+    const closestDistance = Math.hypot(closest.x - player.x, closest.y - player.y);
+    return enemyDistance < closestDistance ? enemy : closest;
+  }, null);
 }
 
 function update(dt) {
-  if (isPaused) return;
+  if (isPaused || levelUpPaused) return;
 
   time += dt;
   spawnTimer += dt;
@@ -478,26 +566,13 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
   player.x = Math.max(player.radius, Math.min(W - player.radius, player.x));
   player.y = Math.max(player.radius, Math.min(H - player.radius, player.y));
 
-  if (player.scatterTimer > 0) {
-    player.scatterTimer -= dt;
-    if (player.scatterTimer <= 0) {
-      player.scatterTimer = 0;
-      player.weapon = 'Pierce Bolt';
-    }
-  }
-
   if (settingsState.autoShoot) {
     tryShoot();
   }
   player.fireTimer -= dt;
 
   if (typeof player.hpDisplay !== 'number') player.hpDisplay = player.hp / player.maxHp;
-  if (typeof player.chargeDisplay !== 'number') player.chargeDisplay = Math.min(1, player.charge / player.maxCharge);
-  if (typeof player.scatterDisplay !== 'number') player.scatterDisplay = player.scatterTimer > 0 ? Math.max(0, player.scatterTimer / player.scatterDuration) : 0;
-
   player.hpDisplay = lerp(player.hpDisplay, Math.max(0, Math.min(1, player.hp / player.maxHp)), 0.18);
-  player.chargeDisplay = lerp(player.chargeDisplay, Math.min(1, player.charge / player.maxCharge), 0.18);
-  player.scatterDisplay = lerp(player.scatterDisplay, player.scatterTimer > 0 ? Math.max(0, player.scatterTimer / player.scatterDuration) : 0, 0.18);
 
   if (player.damageGraceTimer > 0) {
     player.damageGraceTimer -= dt;
@@ -566,17 +641,11 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
           enemies.splice(j, 1);
           kills += 1;
           player.xp += 5;
-          if (player.weapon !== 'Scatter Shot') {
-            player.charge += 0.5;
+          if (Math.random() < 0.05) {
+            spawnWeaponPickup(enemy.x, enemy.y);
+          } else if (Math.random() < 0.5) {
+            spawnPickup(enemy.x, enemy.y);
           }
-          if (player.charge >= player.maxCharge && player.weapon !== 'Scatter Shot') {
-            player.charge = 0;
-            player.weapon = 'Scatter Shot';
-            player.scatterTimer = player.scatterDuration;
-            SoundEngine.scatterActivate();
-            particles.push({ x: player.x, y: player.y, vx: 0, vy: 0, life: 0.6, color: '#ffd166' });
-          }
-          if (Math.random() < 0.5) spawnPickup(enemy.x, enemy.y);
           for (let k = 0; k < 8; k++) {
             particles.push({ x: enemy.x, y: enemy.y, vx: rand(-120, 120), vy: rand(-120, 120), life: 0.35, color: enemy.color });
           }
@@ -602,14 +671,15 @@ const moveY = (keys['arrowup'] ? -1 : 0) + (keys['arrowdown'] ? 1 : 0) + (keys['
   // Pickup collection — player walks over glowing shards to restore HP
   for (let i = pickups.length - 1; i >= 0; i -= 1) {
     const item = pickups[i];
-    item.life -= dt;
     const d = Math.hypot(item.x - player.x, item.y - player.y);
     if (d < item.radius + player.radius) {
-      player.hp = Math.min(player.maxHp, player.hp + 12);
+      if (item.type === 'weapon') {
+        showWeaponPickupOverlay(item.weapon);
+      } else {
+        player.hp = Math.min(player.maxHp, player.hp + 12);
+      }
       SoundEngine.pickup();
-      particles.push({ x: item.x, y: item.y, vx: rand(-50, 50), vy: rand(-80, -20), life: 0.4, color: '#70d6ff' });
-      pickups.splice(i, 1);
-    } else if (item.life <= 0) {
+      particles.push({ x: item.x, y: item.y, vx: rand(-50, 50), vy: rand(-80, -20), life: 0.4, color: item.color });
       pickups.splice(i, 1);
     }
   }
@@ -630,6 +700,7 @@ function levelUpIfReady() {
     player.cooldown = Math.max(0.12, player.cooldown - 0.02);
     SoundEngine.levelUp();
     particles.push({ x: player.x, y: player.y, vx: 0, vy: 0, life: 0.6, color: '#77d7ff' });
+    showLevelUpOverlay();
   }
 }
 
@@ -713,10 +784,26 @@ function drawPickups() {
   for (const item of pickups) {
     ctx.save();
     ctx.translate(item.x, item.y);
-    ctx.fillStyle = item.color;
-    ctx.fillRect(-6, -6, 12, 12);
-    ctx.fillStyle = '#eff6ff';
-    ctx.fillRect(-2, -2, 4, 4);
+    if (item.type === 'weapon') {
+      const pulse = 0.85 + Math.sin(performance.now() * 0.004) * 0.15;
+      ctx.globalAlpha = 0.28;
+      ctx.fillStyle = '#fff7b2';
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = '#fff7b2';
+      ctx.fillRect(-15 * pulse, -15 * pulse, 30 * pulse, 30 * pulse);
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#fff7b2';
+      ctx.fillRect(-7, -7, 14, 14);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fffef0';
+      ctx.fillRect(-3, -3, 6, 6);
+    } else {
+      ctx.fillStyle = item.color;
+      ctx.fillRect(-6, -6, 12, 12);
+      ctx.fillStyle = '#eff6ff';
+      ctx.fillRect(-2, -2, 4, 4);
+    }
     ctx.restore();
   }
 }
@@ -751,9 +838,25 @@ function drawHudText() {
   ctx.translate(shake, 0);
   ctx.fillStyle = 'rgb(255, 255, 255)';
   ctx.font = `${12 / hudScale}px "Press Start 2P"`;
+  const pulse = 0.6 + Math.sin(performance.now() * 0.004) * 0.25;
   ctx.fillText(`SURVIVE: ${Math.floor(time)}s`, hudInset, 28 / hudScale);
   ctx.fillText(`LEVEL ${player.level}`, hudInset, 48 / hudScale);
-  ctx.fillText(`WEAPON: ${player.weapon}`, hudInset, 68 / hudScale);
+
+  const progressBarW = 120;
+  const progressBarH = 8;
+  const nextLevelXp = player.level * 40;
+  const progress = Math.min(1, player.xp / nextLevelXp);
+  const progressBarY = 62 / hudScale;
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
+  ctx.fillRect(hudInset, progressBarY, progressBarW / hudScale, progressBarH / hudScale);
+  ctx.shadowBlur = 10 * pulse;
+  ctx.shadowColor = 'rgba(119, 215, 255, 0.8)';
+  ctx.fillStyle = 'rgba(119, 215, 255, 0.95)';
+  ctx.fillRect(hudInset, progressBarY, (progressBarW * progress) / hudScale, progressBarH / hudScale);
+  ctx.shadowBlur = 0;
+  ctx.font = `${9 / hudScale}px "Press Start 2P"`;
+  ctx.fillStyle = 'rgba(239, 246, 255, 0.9)';
+  ctx.fillText(`XP ${player.xp}/${nextLevelXp}`, hudInset, 82 / hudScale);
 
   ctx.textAlign = 'center';
   ctx.font = `${10 / hudScale}px "Press Start 2P"`;
@@ -763,12 +866,11 @@ function drawHudText() {
   const hpBarW = 120;
   const hpBarH = 10;
   const hpPercent = player.hpDisplay;
-  const hpBarY = H - 82;
-  const pulse = 0.6 + Math.sin(performance.now() * 0.004) * 0.25;
+  const hpBarY = H - 28;
 
   ctx.fillStyle = 'rgba(239, 246, 255, 0.9)';
-  ctx.fillText('HP', 18, H - 94);
-  ctx.fillText(`${Math.floor(hpPercent * 100)}%`, 18 + hpBarW + 10, H - 94);
+  ctx.fillText('HP', 18, H - 40);
+  ctx.fillText(`${Math.floor(hpPercent * 100)}%`, 18 + hpBarW + 10, H - 40);
 
   ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
   ctx.fillRect(18, hpBarY, hpBarW, hpBarH);
@@ -778,30 +880,6 @@ function drawHudText() {
   ctx.fillRect(18, hpBarY, hpBarW * hpPercent, hpBarH);
   ctx.shadowBlur = 0;
 
-  const chargeW = 120;
-  const chargeH = 10;
-  const chargeFill = player.chargeDisplay;
-  const barY = H - 38;
-  ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
-  ctx.fillRect(18, barY, chargeW, chargeH);
-  ctx.shadowBlur = 12 * pulse;
-  ctx.shadowColor = 'rgba(122, 245, 181, 0.8)';
-  ctx.fillStyle = '#7af5b5';
-  ctx.fillRect(18, barY, chargeW * chargeFill, chargeH);
-  ctx.shadowBlur = 0;
-
-  const scatterFill = player.scatterDisplay;
-  ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
-  ctx.fillRect(18, barY + 14, chargeW, chargeH);
-  ctx.shadowBlur = 14 * pulse;
-  ctx.shadowColor = 'rgba(255, 209, 102, 0.9)';
-  ctx.fillStyle = '#ffd166';
-  ctx.fillRect(18, barY + 14, chargeW * scatterFill, chargeH);
-  ctx.shadowBlur = 0;
-
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-  ctx.fillText('CHARGE', 18, H - 58);
-  ctx.fillText(player.scatterTimer > 0 ? 'SCATTER' : 'PIERCE', 18, H - 40);
   ctx.restore();
 }
 
@@ -822,16 +900,15 @@ function resetRun() {
   kills = 0;
   player.hp = player.maxHp;
   player.hpDisplay = 1;
-  player.chargeDisplay = 0;
-  player.scatterDisplay = 0;
   player.xp = 0;
   player.level = 1;
   player.speed = 220;
   player.damage = 18;
   player.cooldown = 0.35;
   player.weapon = 'Pierce Bolt';
-  player.charge = 0;
-  player.scatterTimer = 0;
+  levelUpPaused = false;
+  levelUpOverlay?.classList.remove('open');
+  levelUpOverlay?.setAttribute('aria-hidden', 'true');
   projectiles.length = 0;
   enemies.length = 0;
   pickups.length = 0;

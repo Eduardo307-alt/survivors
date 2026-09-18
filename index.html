@@ -63,6 +63,23 @@
         <button id="manualShootBtn" class="shoot-btn game-shoot-btn hidden" type="button" aria-label="Shoot">
           <span class="shoot-icon">✦</span>
         </button>
+        <div id="levelUpOverlay" class="level-up-overlay" aria-hidden="true">
+          <div class="level-up-vignette"></div>
+          <div class="level-up-content" role="dialog" aria-modal="true" aria-labelledby="levelUpTitle">
+            <p class="eyebrow">Upgrade acquired</p>
+            <h2 id="levelUpTitle">ABILITY UNLOCKED</h2>
+            <div class="weapon-reveal" aria-hidden="true">
+              <span class="weapon-reveal-core"></span>
+              <span class="weapon-reveal-blade weapon-reveal-blade-one"></span>
+              <span class="weapon-reveal-blade weapon-reveal-blade-two"></span>
+              <span class="weapon-reveal-blade weapon-reveal-blade-three"></span>
+            </div>
+            <p class="level-up-label">NEW ABILITY</p>
+            <strong id="levelUpWeapon">Swift Core</strong>
+            <p id="levelUpDescription" class="level-up-description">Move 12% faster through the swarm.</p>
+            <button id="continueLevelBtn" class="continue-level-btn" type="button">Continue</button>
+          </div>
+        </div>
       </div>
 
       <aside class="hud-card" aria-label="Game stats and help">
